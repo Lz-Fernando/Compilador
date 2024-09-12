@@ -1,5 +1,5 @@
 const tokensReservados = [
-    { type: 'COMENTE', regex: /\/\/.*?$/ },
+    { type: 'COMMENT', regex: /\/\/.*?$/ },
     
     { type: 'PROGRAM', regex: /PROGRAM/ , atributo: 'PROGRAM'},
     { type: 'BOOLEAN', regex: /BOOLEAN/ , atributo: 'BOOLEAN'},
@@ -61,7 +61,7 @@ function lexica (codigo) {
             if (combinar && combinar.index === 0) {
                 const valor = combinar[0];
 
-                if (type != 'DESCARTE' && type != 'COMENTE') {
+                if (type != 'DESCARTE' && type != 'COMMENT') {
                     if (type === 'NOVALINHA') {
                         numlinha++;
                     } 
