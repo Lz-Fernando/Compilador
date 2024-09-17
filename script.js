@@ -1,5 +1,5 @@
 const tokensReservados = [
-    { type: 'COMMENT', regex: /\/\/.*?$/ },
+    { type: 'COMMENT', regex: /\/\/.*$/gm },
     
     { type: 'PROGRAM', regex: /PROGRAM/ , atributo: 'PROGRAM'},
     { type: 'BOOLEAN', regex: /BOOLEAN/ , atributo: 'BOOLEAN'},
@@ -92,20 +92,78 @@ function lexica (codigo) {
     return tokens;
 }
 
-const codigo = `
+let codigo = `
 PROGRAM exemplo;
-/ Este e um comentario que deve ser descartado /
+//Este e um comentario que deve ser descartado
 VAR x : INTEGER;
 BEGIN
-    x := 10; / Outro comentario aqui /
+    x := 10; // Outro comentario aqui
     WRITE(x);
 END.
 `;
 
+console.log('Código inicial: \n', codigo);
+
+let codigoLimpo = codigo.replace(/\/\/.*$/gm, ' ');
+console.log('Código limpo: \n',codigoLimpo);
+
 try {
-    const tokens = lexica(codigo);
+    const tokens = lexica(codigoLimpo);
     tokens.forEach( token => 
         console.log(token));
 } catch (erro) {
     console.error(erro.message);
+}
+
+function addElement(){
+    const div = document.getElementById('div1');
+
+    const t1 = document.createElement('p');
+    t1.classList.add('title');
+    t1.textContent = 'Código Inicial: ';
+
+    const t2 = document.createElement('p');
+    t2.classList.add('title');
+    t2.textContent = 'Código Limpo: ';
+
+    const initialCode = document.createElement('pre');
+    initialCode.classList.add('code');
+    initialCode.textContent = codigo;
+
+    const cleanCode = document.createElement('pre');
+    cleanCode.classList.add('code');
+    cleanCode.textContent = codigoLimpo;
+
+    div.appendChild(t1);
+    div.appendChild(initialCode);
+    div.appendChild(t2);
+    div.appendChild(cleanCode);
+}
+
+function tokensSh(tokens){
+    const div = document.getElementById('div1');
+    const t3 = document.createElement('p');
+    t3.classList.add('title');
+    t3.textContent = 'Tokens: ';
+
+    const tokenList = document.createElement('pre');
+    tokenList.classList.add('code');
+
+    tokens.forEach(token => {
+        tokenList.textContent += `Type: ${token.type}, Value: ${token.valor}, Attribute: ${token.atributo}\n`;
+    });
+
+    div.appendChild(t3);
+    div.appendChild(tokenList);
+}
+
+document.body.onload = function(){
+    addElement();
+
+    try {
+        const tokens = lexica(codigoLimpo);
+        tokensSh(tokens);
+    } catch (erro) {
+        console.error(erro.message);
+    }
 }
