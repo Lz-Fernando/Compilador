@@ -167,3 +167,254 @@ document.body.onload = function(){
         console.error(erro.message);
     }
 }
+
+/* gramática
+Prog       --> PROGRAM IDENTIFIER PVIG Decls CmdComp PONTO
+
+Decls      --> ε | VAR ListDecl
+
+ListDecl   --> DeclTip PVIG ListDecl | DeclTip PVIG
+
+DeclTip    --> ListId DPONTOS Tip
+
+ListId     --> IDENTIFIER | IDENTIFIER VIG ListId
+
+Tip        --> INTEGER | BOOLEAN | ID
+
+CmdComp    --> BEGIN ListCmd END
+
+ListCmd    --> Cmd PVIG ListCmd | Cmd
+
+Cmd        --> CmdWhile | CmdRead | CmdWrite | CmdAtrib | CmdComp
+
+CmdWhile   --> WHILE Expr DO Cmd
+
+CmdRead    --> READ ABPAR ListId FPAR
+
+CmdWrite   --> WRITE ABPAR ListW FPAR
+
+ListW      --> ElemW | ElemW VIG ListW
+
+ElemW      --> STRING | Expr
+
+CmdAtrib   --> IDENTIFIER ATRIB Expr
+
+Expr       --> Expr OPREL Expr
+            | Expr OPAD Expr
+            | Expr OPMULT Expr
+            | OPNEG Expr
+            | Term
+
+Term       --> IDENTIFIER
+            | CTE
+            | ABPAR Expr FPAR
+            | TRUE
+            | FALSE
+            | OPNEG Term
+*/
+
+// Analisador lexico
+
+function parser(tokens) {
+    let currentTokenIndex = 0;
+    
+    function currentToken() {
+        return tokens[currentTokenIndex];
+    }
+
+    function match(expectedType) {
+        if (currentToken().type === expectedType) {
+            currentTokenIndex++;
+        } else {
+            throw new Error(`Erro: esperado ${expectedType}, encontrado ${currentToken().type}`);
+        }
+    }
+
+    // Implementação de cada regra da gramática
+    
+    function Prog() {
+        match('PROGRAM');
+        match('ID');  // Identificador
+        match('PVIG');  // ;
+        Decls();
+        CmdComp();
+        match('PONTO');  // .
+    }
+
+    function Decls() {
+        if (currentToken().type === 'VAR') {
+            match('VAR');
+            ListDecl();
+        }
+    }
+
+    function ListDecl() {
+        DeclTip();
+        while (currentToken().type === 'VIG') {  // ,
+            match('VIG');
+            DeclTip();
+        }
+    }
+
+    function DeclTip() {
+        ListId();
+        match('DPONTOS');  // :
+        Tip();
+        match('PVIG');  // ;
+    }
+
+    function ListId() {
+        match('ID');  // Identificador
+        if (currentToken().type === 'VIG') {
+            match('VIG');
+            ListId();
+        }
+    }
+
+    function Tip() {
+        if (currentToken().type === 'INTEGER') {
+            match('INTEGER');
+        } else if (currentToken().type === 'BOOLEAN') {
+            match('BOOLEAN');
+        } else if (currentToken().type === 'ID') {  // Tipos definidos pelo usuário
+            match('ID');
+        } else {
+            throw new Error('Tipo esperado');
+        }
+    }
+
+    function CmdComp() {
+        match('BEGIN');
+        ListCmd();
+        match('END');
+    }
+
+    function ListCmd() {
+        Cmd();
+        while (currentToken().type === 'PVIG') {  // ;
+            match('PVIG');
+            Cmd();
+        }
+    }
+
+    function Cmd() {
+        if (currentToken().type === 'ID') {
+            CmdAtrib();
+        } else if (currentToken().type === 'WHILE') {
+            CmdWhile();
+        } else if (currentToken().type === 'READ') {
+            CmdRead();
+        } else if (currentToken().type === 'WRITE') {
+            CmdWrite();
+        } else if (currentToken().type === 'BEGIN') {
+            CmdComp();
+        } else {
+            throw new Error('Comando inválido');
+        }
+    }
+
+    function CmdAtrib() {
+        match('ID');  // Identificador
+        match('ATRIB');  // :=
+        match('NUM')
+        ListCmd()
+        Expr();
+    }
+
+    function CmdWhile() {
+        match('WHILE');
+        Expr();
+        match('DO');
+        Cmd();
+    }
+
+    function CmdRead() {
+        match('READ');
+        match('ABPAR');  // (
+        ListId();
+        match('FPAR');  // )
+    }
+
+    function CmdWrite() {
+        match('WRITE');
+        match('ABPAR');  // (
+        ListW();
+        match('FPAR');  // )
+    }
+
+    function ListW() {
+        ElemW();
+        while (currentToken().type === 'VIG') {
+            match('VIG');
+            ElemW();
+        }
+    }
+
+    function ElemW() {
+        if (currentToken().type === 'ID') {
+            match('ID');
+        } else {
+            Expr();
+        }
+    }
+
+    function Expr() {
+        ExprRel();
+    }
+    
+    function ExprRel() {
+        ExprAdd();
+        while (['MENOR', 'MENIG', 'MAIOR', 'MAIG', 'IGUAL', 'DIFER'].includes(currentToken().atributo)) {
+            match('OPREL');  // Continua reconhecendo como operador relacional
+            ExprAdd();
+        }
+    }
+    
+    function ExprAdd() {
+        ExprMult();
+        while (['MAIS', 'MENOS'].includes(currentToken().atributo)) {
+            match('OPAD');
+            ExprMult();
+        }
+    }
+    
+    function ExprMult() {
+        Term();
+        while (['VEZES', 'DIV'].includes(currentToken().atributo)) {
+            match('OPMULT');
+            Term();
+        }
+    }
+    
+    function Term() {
+        if (currentToken().type === 'OPNEG') {
+            match('OPNEG');
+            Term();
+        } else if (['ID', 'NUM', 'TRUE', 'FALSE'].includes(currentToken().type)) {
+            match(currentToken().type);
+        } else if (currentToken().type === 'ABPAR') {
+            match('ABPAR');
+            Expr();
+            match('FPAR');
+        } else {
+            throw new Error('Termo esperado');
+        }
+    }   
+
+    // Início da análise sintática
+    Prog();
+    
+    // Verifica se todos os tokens foram consumidos
+    if (currentTokenIndex !== tokens.length) {
+        throw new Error('Tokens restantes após a análise');
+    }
+}
+
+// Exemplo de uso
+const tokens = lexica(codigoLimpo);  // A função léxica já foi fornecida
+try {
+    parser(tokens);
+    console.log('Análise sintática concluída com sucesso.');
+} catch (erro) {
+    console.error(erro.message);
+}
