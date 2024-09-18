@@ -207,7 +207,7 @@ Term       --> IDENTIFIER
 
 function parser(tokens) {
     let currentTokenIndex = 0;
-    
+
     function currentToken() {
         if (currentTokenIndex >= tokens.length) {
             throw new Error('Fim inesperado de entrada');
@@ -223,7 +223,6 @@ function parser(tokens) {
             throw new Error(`Erro: esperado ${expectedType}, encontrado ${currentToken().type}`);
         }
     }
-    
 
     function Prog() {
         match('PROGRAM');
@@ -231,7 +230,7 @@ function parser(tokens) {
         match('PVIG');
         Decls();
         CmdComp();
-        match('PONTO');
+        match('PONTO');  // O ponto final é esperado aqui para encerrar o programa
     }
 
     function Decls() {
@@ -279,19 +278,25 @@ function parser(tokens) {
     function CmdComp() {
         match('BEGIN');
         ListCmd();
+        
+        // Se o token seguinte for o PONTO, não continue esperando END, pois o bloco de comandos já terminou
+        if (currentToken().type === 'PONTO') {
+            return;
+        }
+        
         match('END');
     }
 
     function ListCmd() {
-        Cmd();
-        while (currentToken().type === 'PVIG') {
-            match('PVIG');
+        while (currentToken().type !== 'END' && currentToken().type !== 'PONTO') {
             Cmd();
+            if (currentToken().type === 'PVIG') {
+                match('PVIG');
+            }
         }
     }
 
     function Cmd() {
-        console.log("Token atual em Cmd():", currentToken());
         if (currentToken().type === 'ID') {
             CmdAtrib();
         } else if (currentToken().type === 'WHILE') {
@@ -302,6 +307,8 @@ function parser(tokens) {
             CmdWrite();
         } else if (currentToken().type === 'BEGIN') {
             CmdComp();
+        } else if (currentToken().type === 'END') {
+            return; // 'END' é esperado, mas não é comando
         } else {
             throw new Error('Comando inválido');
         }
@@ -312,6 +319,7 @@ function parser(tokens) {
         match('ATRIB');
         Expr();
     }
+
     function CmdWhile() {
         match('WHILE');
         Expr();
@@ -321,16 +329,16 @@ function parser(tokens) {
 
     function CmdRead() {
         match('READ');
-        match('ABPAR');  // (
+        match('ABPAR');
         ListId();
-        match('FPAR');  // )
+        match('FPAR');
     }
 
     function CmdWrite() {
         match('WRITE');
-        match('ABPAR');  // (
+        match('ABPAR');
         ListW();
-        match('FPAR');  // )
+        match('FPAR');
     }
 
     function ListW() {
@@ -352,7 +360,7 @@ function parser(tokens) {
     function Expr() {
         ExprRel();
     }
-    
+
     function ExprRel() {
         ExprAdd();
         while (['MENOR', 'MENIG', 'MAIOR', 'MAIG', 'IGUAL', 'DIFER'].includes(currentToken().atributo)) {
@@ -360,7 +368,7 @@ function parser(tokens) {
             ExprAdd();
         }
     }
-    
+
     function ExprAdd() {
         ExprMult();
         while (['MAIS', 'MENOS'].includes(currentToken().atributo)) {
@@ -368,7 +376,7 @@ function parser(tokens) {
             ExprMult();
         }
     }
-    
+
     function ExprMult() {
         Term();
         while (['VEZES', 'DIV'].includes(currentToken().atributo)) {
@@ -376,31 +384,31 @@ function parser(tokens) {
             Term();
         }
     }
-    
+
     function Term() {
         if (currentToken().type === 'OPNEG') {
-            match('OPNEG');  // Operador de negação
+            match('OPNEG');
             Term();
         } else if (['ID', 'NUM', 'TRUE', 'FALSE'].includes(currentToken().type)) {
-            match(currentToken().type);  // Identificador, número ou valores booleanos
+            match(currentToken().type);
         } else if (currentToken().type === 'ABPAR') {
-            match('ABPAR');  // (
-            Expr();  // Expressão entre parênteses
-            match('FPAR');  // )
+            match('ABPAR');
+            Expr();
+            match('FPAR');
         } else {
             throw new Error('Termo esperado');
         }
-    }   
+    }
 
     // Início da análise sintática
     Prog();
-    
+
     if (currentTokenIndex !== tokens.length) {
         throw new Error('Tokens restantes após a análise');
     }
-    
 }
 
+// Execução do parser com os tokens resultantes de um analisador léxico
 const tokens = lexica(codigoLimpo);
 try {
     parser(tokens);
