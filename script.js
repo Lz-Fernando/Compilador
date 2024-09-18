@@ -262,7 +262,7 @@ function parser(tokens, logFunction) {
         match('PVIG');
         Decls();
         CmdComp();
-        match('PONTO');  // O ponto final é esperado aqui para encerrar o programa
+        match('PONTO');
     }
 
     function Decls() {
@@ -311,7 +311,6 @@ function parser(tokens, logFunction) {
         match('BEGIN');
         ListCmd();
         
-        // Se o token seguinte for o PONTO, não continue esperando END, pois o bloco de comandos já terminou
         if (currentToken().type === 'PONTO') {
             return;
         }
@@ -340,7 +339,7 @@ function parser(tokens, logFunction) {
         } else if (currentToken().type === 'BEGIN') {
             CmdComp();
         } else if (currentToken().type === 'END') {
-            return; // 'END' é esperado, mas não é comando
+            return;
         } else {
             throw new Error('Comando inválido');
         }
@@ -440,7 +439,6 @@ function parser(tokens, logFunction) {
     }
 }
 
-// Execução do parser com os tokens resultantes de um analisador léxico
 const tokens = lexica(codigoLimpo);
 try {
     parser(tokens);
