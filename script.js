@@ -1,6 +1,5 @@
 const tokensReservados = [
     { type: 'COMMENT', regex: /\/\/.*$/gm },
-    
     { type: 'PROGRAM', regex: /PROGRAM/ , atributo: 'PROGRAM'},
     { type: 'BOOLEAN', regex: /BOOLEAN/ , atributo: 'BOOLEAN'},
     { type: 'INTEGER', regex: /INTEGER/ , atributo: 'INTEGER'},
@@ -43,12 +42,11 @@ const tokensReservados = [
     { type: 'FPAR', regex: /\)/ , atributo: 'FPAR'},
 
     { type: 'DESCARTE', regex: /[ \t]+/ },
-
     { type: 'NOVALINHA', regex: /\n/ },
     { type: 'MISMATCH', regex: /./ }
 ];
 
-function lexica (codigo) {
+function lexica(codigo) {
     let tokens = [];
     let numlinha = 1;
 
@@ -64,20 +62,16 @@ function lexica (codigo) {
                 if (type != 'DESCARTE' && type != 'COMMENT') {
                     if (type === 'NOVALINHA') {
                         numlinha++;
-                    } 
-                    
-                    else if (type === 'MISMATCH') {
+                    } else if (type === 'MISMATCH') {
                         throw new Error (`Token inesperado ${valor} na linha ${numlinha}`);
-                    }
-    
-                    else {
-                        if (type === 'NUM' | type === 'ID') {
-                            atributo = valor
+                    } else {
+                        if (type === 'NUM' || type === 'ID') {
+                            atributo = valor;
                         }
                         tokens.push({type, valor, atributo});
                     }
                 }
-                
+
                 codigo = codigo.slice(valor.length);
                 combinou = true;
                 break;
@@ -108,20 +102,9 @@ BEGIN
 END.
 `;
 
-console.log('Código inicial: \n', codigo);
+let codigoLimpo = codigo.replace(/\/\/.*$|\/\*[\s\S]*?\*\//gm, ' ');
 
-let codigoLimpo = codigo.replace(/\/\/.*$/gm, ' ');
-console.log('Código limpo: \n',codigoLimpo);
-
-try {
-    const tokens = lexica(codigoLimpo);
-    tokens.forEach( token => 
-        console.log(token));
-} catch (erro) {
-    console.error(erro.message);
-}
-
-function addElement(){
+function addElement() {
     const div = document.getElementById('div1');
 
     const t1 = document.createElement('p');
@@ -146,7 +129,7 @@ function addElement(){
     div.appendChild(cleanCode);
 }
 
-function tokensSh(tokens){
+function tokensSh(tokens) {
     const div = document.getElementById('div1');
     const t3 = document.createElement('p');
     t3.classList.add('title');
@@ -163,7 +146,7 @@ function tokensSh(tokens){
     div.appendChild(tokenList);
 }
 
-document.body.onload = function(){
+document.body.onload = function() {
     addElement();
 
     try {
@@ -173,6 +156,7 @@ document.body.onload = function(){
         console.error(erro.message);
     }
 }
+
 
 /* gramática
 Prog       --> PROGRAM IDENTIFIER PVIG Decls CmdComp PONTO
@@ -225,26 +209,29 @@ function parser(tokens) {
     let currentTokenIndex = 0;
     
     function currentToken() {
+        if (currentTokenIndex >= tokens.length) {
+            throw new Error('Fim inesperado de entrada');
+        }
         return tokens[currentTokenIndex];
     }
 
     function match(expectedType) {
+        console.log(`Esperando: ${expectedType}, atual: ${currentToken().type}`);
         if (currentToken().type === expectedType) {
             currentTokenIndex++;
         } else {
             throw new Error(`Erro: esperado ${expectedType}, encontrado ${currentToken().type}`);
         }
     }
-
-    // Implementação de cada regra da gramática
     
+
     function Prog() {
         match('PROGRAM');
-        match('ID');  // Identificador
-        match('PVIG');  // ;
+        match('ID');
+        match('PVIG');
         Decls();
         CmdComp();
-        match('PONTO');  // .
+        match('PONTO');
     }
 
     function Decls() {
@@ -256,7 +243,7 @@ function parser(tokens) {
 
     function ListDecl() {
         DeclTip();
-        while (currentToken().type === 'VIG') {  // ,
+        while (currentToken().type === 'VIG') {
             match('VIG');
             DeclTip();
         }
@@ -264,13 +251,13 @@ function parser(tokens) {
 
     function DeclTip() {
         ListId();
-        match('DPONTOS');  // :
+        match('DPONTOS');
         Tip();
-        match('PVIG');  // ;
+        match('PVIG');
     }
 
     function ListId() {
-        match('ID');  // Identificador
+        match('ID');
         if (currentToken().type === 'VIG') {
             match('VIG');
             ListId();
@@ -282,7 +269,7 @@ function parser(tokens) {
             match('INTEGER');
         } else if (currentToken().type === 'BOOLEAN') {
             match('BOOLEAN');
-        } else if (currentToken().type === 'ID') {  // Tipos definidos pelo usuário
+        } else if (currentToken().type === 'ID') {
             match('ID');
         } else {
             throw new Error('Tipo esperado');
@@ -297,14 +284,14 @@ function parser(tokens) {
 
     function ListCmd() {
         Cmd();
-        while (currentToken().type === 'PVIG') {  // ;
+        while (currentToken().type === 'PVIG') {
             match('PVIG');
             Cmd();
         }
     }
 
     function Cmd() {
-        console.log("Token atual em Cmd():", currentToken());  // Adicione isto para ver qual token está causando o erro
+        console.log("Token atual em Cmd():", currentToken());
         if (currentToken().type === 'ID') {
             CmdAtrib();
         } else if (currentToken().type === 'WHILE') {
@@ -321,9 +308,9 @@ function parser(tokens) {
     }
 
     function CmdAtrib() {
-        match('ID');  // Identificador
-        match('ATRIB');  // :=
-        Expr();  // Expressão após o operador de atribuição
+        match('ID');
+        match('ATRIB');
+        Expr();
     }
     function CmdWhile() {
         match('WHILE');
@@ -369,7 +356,7 @@ function parser(tokens) {
     function ExprRel() {
         ExprAdd();
         while (['MENOR', 'MENIG', 'MAIOR', 'MAIG', 'IGUAL', 'DIFER'].includes(currentToken().atributo)) {
-            match('OPREL');  // Operador relacional
+            match('OPREL');
             ExprAdd();
         }
     }
@@ -377,7 +364,7 @@ function parser(tokens) {
     function ExprAdd() {
         ExprMult();
         while (['MAIS', 'MENOS'].includes(currentToken().atributo)) {
-            match('OPAD');  // Operador de adição ou subtração
+            match('OPAD');
             ExprMult();
         }
     }
@@ -385,7 +372,7 @@ function parser(tokens) {
     function ExprMult() {
         Term();
         while (['VEZES', 'DIV'].includes(currentToken().atributo)) {
-            match('OPMULT');  // Operador de multiplicação ou divisão
+            match('OPMULT');
             Term();
         }
     }
@@ -408,14 +395,13 @@ function parser(tokens) {
     // Início da análise sintática
     Prog();
     
-    // Verifica se todos os tokens foram consumidos
     if (currentTokenIndex !== tokens.length) {
         throw new Error('Tokens restantes após a análise');
     }
+    
 }
 
-// Exemplo de uso
-const tokens = lexica(codigoLimpo);  // A função léxica já foi fornecida
+const tokens = lexica(codigoLimpo);
 try {
     parser(tokens);
     console.log('Análise sintática concluída com sucesso.');
