@@ -106,6 +106,9 @@ let codigoLimpo = codigo.replace(/\/\/.*$|\/\*[\s\S]*?\*\//gm, ' ');
 
 function addElement() {
     const div = document.getElementById('div1');
+    const title = document.createElement('h1');
+    title.classList.add('title');
+    title.textContent = 'Compilador - Léxico/Sintático'
 
     const t1 = document.createElement('p');
     t1.classList.add('title');
@@ -123,17 +126,19 @@ function addElement() {
     cleanCode.classList.add('code');
     cleanCode.textContent = codigoLimpo;
 
+    div.appendChild(title);
     div.appendChild(t1);
     div.appendChild(initialCode);
     div.appendChild(t2);
     div.appendChild(cleanCode);
 }
 
-function tokensSh(tokens) {
-    const div = document.getElementById('div1');
+function lexicoSh(tokens) {
+    const div = document.getElementById('div2');
+    const esq = document.getElementById('esq')
     const t3 = document.createElement('p');
     t3.classList.add('title');
-    t3.textContent = 'Tokens: ';
+    t3.textContent = 'Léxico: ';
 
     const tokenList = document.createElement('pre');
     tokenList.classList.add('code');
@@ -142,8 +147,33 @@ function tokensSh(tokens) {
         tokenList.textContent += `Type: ${token.type}, Value: ${token.valor}, Attribute: ${token.atributo}\n`;
     });
 
-    div.appendChild(t3);
-    div.appendChild(tokenList);
+    esq.appendChild(t3);
+    esq.appendChild(tokenList);
+}
+
+function sintaticoSh(tokens){
+    const div = document.getElementById('div2');
+    const dir = document.getElementById('dir')
+    const t4 = document.createElement('p');
+    t4.classList.add('title');
+    t4.textContent = 'Sintático: ';
+
+    const sintList = document.createElement('pre');
+    sintList.classList.add('code');
+
+    dir.append(t4);
+    dir.append(sintList);
+
+    function logFunction(message) {
+        sintList.textContent += message + '\n';
+    }
+
+    try {
+        parser(tokens, logFunction);
+        sintList.textContent += "Análise sintática concluída com sucesso.\n";
+    } catch (error) {
+        sintList.textContent += `Erro: ${error.message}\n`;
+    }
 }
 
 document.body.onload = function() {
@@ -151,7 +181,8 @@ document.body.onload = function() {
 
     try {
         const tokens = lexica(codigoLimpo);
-        tokensSh(tokens);
+        lexicoSh(tokens);
+        sintaticoSh(tokens);
     } catch (erro) {
         console.error(erro.message);
     }
@@ -205,7 +236,7 @@ Term       --> IDENTIFIER
 
 // Analisador lexico
 
-function parser(tokens) {
+function parser(tokens, logFunction) {
     let currentTokenIndex = 0;
 
     function currentToken() {
@@ -217,6 +248,7 @@ function parser(tokens) {
 
     function match(expectedType) {
         console.log(`Esperando: ${expectedType}, atual: ${currentToken().type}`);
+        logFunction(`Esperando: ${expectedType}, atual: ${currentToken().type}`);
         if (currentToken().type === expectedType) {
             currentTokenIndex++;
         } else {
