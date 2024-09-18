@@ -26,8 +26,8 @@ const tokensReservados = [
     { type: 'OPREL', regex: /<=/ , atributo: 'MENIG'},
     { type: 'OPREL', regex: />/ , atributo: 'MAIOR'},
     { type: 'OPREL', regex: /=>/ , atributo: 'MAIG'},
-    { type: 'OPREL', regex: /==/ , atributo: 'IGUAL'},
     { type: 'OPREL', regex: /<>/ , atributo: 'DIFER'},
+    { type: 'OPREL', regex: /==/ , atributo: 'IGUAL'},
 
     { type: 'OPLOG', regex: /AND/ , atributo: 'AND'},
     { type: 'OPLOG', regex: /OR/ , atributo: 'OR'},
@@ -94,11 +94,17 @@ function lexica (codigo) {
 
 let codigo = `
 PROGRAM exemplo;
-//Este e um comentario que deve ser descartado
-VAR x : INTEGER;
+//Comentário que será descartado
+VAR 
+    x, y : INTEGER;
 BEGIN
-    x := 10; // Outro comentario aqui
-    WRITE(x);
+    x := 10;
+    y := x * 2; // Atribuição com operação aritmética
+    WHILE x < y DO
+    BEGIN
+        WRITE(x); // Escreve o valor de x
+        x := x + 1; // Incrementa x
+    WRITE(Finalizado);
 END.
 `;
 
@@ -298,6 +304,7 @@ function parser(tokens) {
     }
 
     function Cmd() {
+        console.log("Token atual em Cmd():", currentToken());  // Adicione isto para ver qual token está causando o erro
         if (currentToken().type === 'ID') {
             CmdAtrib();
         } else if (currentToken().type === 'WHILE') {
@@ -316,11 +323,8 @@ function parser(tokens) {
     function CmdAtrib() {
         match('ID');  // Identificador
         match('ATRIB');  // :=
-        match('NUM')
-        ListCmd()
-        Expr();
+        Expr();  // Expressão após o operador de atribuição
     }
-
     function CmdWhile() {
         match('WHILE');
         Expr();
@@ -365,7 +369,7 @@ function parser(tokens) {
     function ExprRel() {
         ExprAdd();
         while (['MENOR', 'MENIG', 'MAIOR', 'MAIG', 'IGUAL', 'DIFER'].includes(currentToken().atributo)) {
-            match('OPREL');  // Continua reconhecendo como operador relacional
+            match('OPREL');  // Operador relacional
             ExprAdd();
         }
     }
@@ -373,7 +377,7 @@ function parser(tokens) {
     function ExprAdd() {
         ExprMult();
         while (['MAIS', 'MENOS'].includes(currentToken().atributo)) {
-            match('OPAD');
+            match('OPAD');  // Operador de adição ou subtração
             ExprMult();
         }
     }
@@ -381,21 +385,21 @@ function parser(tokens) {
     function ExprMult() {
         Term();
         while (['VEZES', 'DIV'].includes(currentToken().atributo)) {
-            match('OPMULT');
+            match('OPMULT');  // Operador de multiplicação ou divisão
             Term();
         }
     }
     
     function Term() {
         if (currentToken().type === 'OPNEG') {
-            match('OPNEG');
+            match('OPNEG');  // Operador de negação
             Term();
         } else if (['ID', 'NUM', 'TRUE', 'FALSE'].includes(currentToken().type)) {
-            match(currentToken().type);
+            match(currentToken().type);  // Identificador, número ou valores booleanos
         } else if (currentToken().type === 'ABPAR') {
-            match('ABPAR');
-            Expr();
-            match('FPAR');
+            match('ABPAR');  // (
+            Expr();  // Expressão entre parênteses
+            match('FPAR');  // )
         } else {
             throw new Error('Termo esperado');
         }
