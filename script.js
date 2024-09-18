@@ -87,6 +87,25 @@ function lexica(codigo) {
 }
 
 let codigo = `
+PROGRAM calculadora;
+VAR
+    num, num2, resultado : INTEGER;
+BEGIN
+    READ(num);
+    READ(num2);
+    resultado := num + num2;
+    WRITE(resultado);
+    WHILE resultado < 100 DO
+    BEGIN
+        resultado := resultado + 10;
+        WRITE(resultado);
+    END;
+END.
+
+`;
+
+/*
+let codigo = `
 PROGRAM exemplo;
 //Comentário que será descartado
 VAR 
@@ -101,6 +120,7 @@ BEGIN
     WRITE(Finalizado);
 END.
 `;
+*/
 
 let codigoLimpo = codigo.replace(/\/\/.*$|\/\*[\s\S]*?\*\//gm, ' ');
 
